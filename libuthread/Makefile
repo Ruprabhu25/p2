@@ -4,10 +4,11 @@ lib := libuthread.a
 all: $(lib)
 
 ## TODO: Phase 1
-ar rcs libuthread.a queue.o
-
 queue: queue.c queue.h
 	gcc -Wall -Wextra -Werror -o queue queue.c 
 
+libuthread.a: queue.o
+	ar rcs libuthread.a queue.o
+
 clean: 
-	rm -f lib
+	rm -f libuthread.a queue.o
