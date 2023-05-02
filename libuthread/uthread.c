@@ -55,6 +55,7 @@ int uthread_run(bool preempt, uthread_func_t func, void *arg)
 	queue = queue_create();
 
 	uthread_create(func, arg);
+	return 0;
 
 }
 
