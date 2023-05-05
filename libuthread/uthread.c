@@ -43,6 +43,8 @@ void get_next(queue_t queue, void* node, void* arg) {
 		current_thread->state = READY;
 		current_thread = thread;
 		current_thread->state = RUNNING;
+		return;
+		// need to add some sort of flag indicating we do not need to iterate further
 	}
 
 }
