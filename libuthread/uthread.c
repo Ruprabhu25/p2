@@ -10,27 +10,47 @@
 #include "uthread.h"
 #include "queue.h"
 
- 
+ #define RUNNING 0
+ #define READY 1
+ #define BLOCKED 2
 
 int cur_id = 1;
 queue_t queue;
+struct uthread_tcb* current_thread;
+
+
 struct uthread_tcb {
 	/* TODO Phase 2 */
 	int id;
 	int state; /* 0 indicates ready to run, 1 indicates running, 2 indicate exit*/
-	void * stack_ptr;
-	uthread_ctx_t * context;
-
+	void* stack_ptr;
+	uthread_ctx_t* context;
 };
 
 struct uthread_tcb *uthread_current(void)
 {
-	/* TODO Phase 2/3 */
+	return current_thread;
+}
+
+// get next ready node
+void get_next(queue_t queue, void* node, void* arg) {
+	struct uthread_tcb* thread = node;
+	if (current_thread->id = thread->id) {
+		return; // ignore current thread
+	}
+	if (thread->state == READY) {
+		uthread_ctx_switch(current_thread->context, thread->context);
+		current_thread->state = READY;
+		current_thread = thread;
+		current_thread->state = RUNNING;
+	}
+
 }
 
 void uthread_yield(void)
 {
-	/* TODO Phase 2 */
+	queue_func_t next_func = &get_next;
+	queue_iterate(queue, get_next);
 }
 
 void uthread_exit(void)
@@ -43,7 +63,7 @@ int uthread_create(uthread_func_t func, void *arg)
 {
 	struct uthread_tcb* thread = malloc(sizeof(struct uthread_tcb));
 	thread->stack_ptr = uthread_ctx_alloc_stack();
-	thread->state = 1;
+	thread->state = RUNNING;
 	thread->context = malloc(sizeof(uthread_ctx_t));
 	uthread_ctx_init(thread->context, thread->stack_ptr,func, arg);
 	queue_enqueue(queue, thread);
@@ -53,7 +73,6 @@ int uthread_create(uthread_func_t func, void *arg)
 int uthread_run(bool preempt, uthread_func_t func, void *arg)
 {
 	queue = queue_create();
-
 	uthread_create(func, arg);
 	return 0;
 
