@@ -10,7 +10,7 @@
 /**
  * Private context API
  */
-#include <ucontext.h>
+#include <sys/ucontext.h>
 
 #include "uthread.h"
 
