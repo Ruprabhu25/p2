@@ -12,7 +12,8 @@
 
  #define RUNNING 0
  #define READY 1
- #define BLOCKED 2
+ #define WAITING 2
+ #define DONE 3
 
 int cur_id = 1;
 queue_t queue;
@@ -49,35 +50,43 @@ void get_next(queue_t queue, void* node, void* arg) {
 
 }
 
-void uthread_yield(void)
-{
+void uthread_yield(void) {
 	queue_func_t next_func = &get_next;
 	queue_iterate(queue, get_next);
 }
 
-void uthread_exit(void)
-{
+void uthread_exit(void) {
 	/* TODO Phase 2 */
+	struct uthread_tcb* done_thread = current_thread;
+	uthread_yield();
+	done_thread->state = DONE;
+
 }
 
-int uthread_create(uthread_func_t func, void *arg)
-
-{
+int uthread_create(uthread_func_t func, void *arg) {
 	struct uthread_tcb* thread = malloc(sizeof(struct uthread_tcb));
+	if (thread == NULL) {
+		return -1;
+	}
 	thread->stack_ptr = uthread_ctx_alloc_stack();
 	thread->state = RUNNING;
 	thread->context = malloc(sizeof(uthread_ctx_t));
 	uthread_ctx_init(thread->context, thread->stack_ptr,func, arg);
+	if (thread->stack_ptr == NULL || thread->context == NULL) {
+		return -1;
+	}
 	queue_enqueue(queue, thread);
+	return 0;
 	/* TODO Phase 2 */
 }
 
 int uthread_run(bool preempt, uthread_func_t func, void *arg)
 {
 	queue = queue_create();
-	uthread_create(func, arg);
+	if (uthread_create(func, arg) == -1)
+		return -1;
+	while (queue_length != 0) {;}
 	return 0;
-
 }
 
 void uthread_block(void)

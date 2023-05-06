@@ -115,10 +115,11 @@ int queue_iterate(queue_t queue, queue_func_t func)
 	if (queue == NULL || func == NULL) {
 		return -1;
 	}
+	int retval;
 	struct Node* temp = queue->head;
 	
 	while (temp != NULL) {
-		func(queue, temp->data);
+		(*func)(queue, temp->data);
 		temp = temp->next;
 	}
 	return 0;
