@@ -66,7 +66,7 @@ void test_queue_empty(void)
 }
 
 
-/*
+
 void test_queue_delete_single(void)
 {
 	int data = 3;
@@ -76,10 +76,11 @@ void test_queue_delete_single(void)
 
 	q = queue_create();
 	queue_enqueue(q, &data);
+	TEST_ASSERT(queue_length(q) == 1);
 	TEST_ASSERT(queue_delete(q, &data) == 0);
 	TEST_ASSERT(queue_length(q) == 0);
 }
-*/
+
 
 void test_queue_delete_multiple(void)
 {
@@ -106,7 +107,10 @@ void test_queue_destroy_empty(void)
     TEST_ASSERT(queue_destroy(q) == 0);
 }
 
-
+// do test_queue_delete_multiple but data2 and data3 are the same
+// do test_queue_destroy_empty but queue is full of items
+// try queue_iterate tests (like incrementing each data value)
+// try queue_iterate tests that delete multiple nodes
 
 
 int main(void)
@@ -115,7 +119,7 @@ int main(void)
 	test_queue_simple();
 	test_queue_multiple();
 	test_queue_empty();
-	/*test_queue_delete_single();*/
+	test_queue_delete_single();
 	test_queue_delete_multiple();
 	test_queue_destroy_empty();
 

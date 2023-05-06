@@ -53,15 +53,17 @@ void get_next(queue_t queue, void* node) {
 void uthread_yield(void) {
 	queue_func_t next_func = &get_next;
 	queue_iterate(queue, get_next);
+	//uthread_ctx_switch(current, next);
 }
 
 void uthread_exit(void) {
 	/* TODO Phase 2 */
 	struct uthread_tcb* done_thread = current_thread;
 	uthread_yield();
-	queue_dequeue(queue, done_thread);
+	//queue_dequeue(queue, done_thread);
 	// also have to queue_dequeue
 	done_thread->state = DONE;
+	uthread_ctx_destroy_stack(done_thread->stack_ptr);
 }
 
 int uthread_create(uthread_func_t func, void *arg) {
@@ -77,6 +79,8 @@ int uthread_create(uthread_func_t func, void *arg) {
 	if (thread->stack_ptr == NULL || thread->context == NULL) {
 		return -1;
 	}
+	//printf("here\n");
+	func(arg);
 	queue_enqueue(queue, thread);
 	return 0;
 	/* TODO Phase 2 */

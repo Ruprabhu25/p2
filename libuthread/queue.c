@@ -88,6 +88,18 @@ int queue_delete(queue_t queue, void *data)
 	struct Node* prev = NULL;
 	struct Node* curr = queue->head;
 	struct Node* next = queue->head->next;
+
+	if (queue_length(queue) == 1) {
+		if (curr->data == data) {
+			free(curr);
+			queue->len--;
+			return 0;
+		}
+		else {
+			return -1;
+		}
+	}
+
 	while (next != NULL) {
 		if (curr->data == data) {
 			if (prev == NULL) { // delete head of queue
