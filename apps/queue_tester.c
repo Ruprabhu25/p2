@@ -37,10 +37,27 @@ void test_queue_simple(void)
 	TEST_ASSERT(ptr == &data);
 }
 
+void test_queue_multiple(void)
+{
+	int data1 = 3, data2 = 5, *ptr;
+	queue_t q;
+
+	fprintf(stderr, "*** TEST queue_multiple ***\n");
+
+	q = queue_create();
+	queue_enqueue(q, &data1);
+	queue_enqueue(q, &data2);
+	queue_dequeue(q, (void**)&ptr);
+	TEST_ASSERT(ptr == &data1);
+	queue_dequeue(q, (void**)&ptr);
+	TEST_ASSERT(ptr == &data2);
+}
+
+
 int main(void)
 {
 	test_create();
 	test_queue_simple();
-
+	test_queue_multiple();
 	return 0;
 }
