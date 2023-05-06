@@ -10,7 +10,8 @@
 /**
  * Private context API
  */
-#include <sys/ucontext.h>
+#define _XOPEN_SOURCE 1
+#include <ucontext.h>
 
 #include "uthread.h"
 

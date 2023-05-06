@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
+#define _XOPEN_SOURCE 1
+#include <ucontext.h>
+
 
 #include "private.h"
 #include "uthread.h"

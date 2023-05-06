@@ -34,9 +34,9 @@ struct uthread_tcb *uthread_current(void)
 }
 
 // get next ready node
-void get_next(queue_t queue, void* node, void* arg) {
+void get_next(void* node, void* arg) {
 	struct uthread_tcb* thread = node;
-	if (current_thread->id = thread->id) {
+	if (current_thread->id == thread->id) {
 		return; // ignore current thread
 	}
 	if (thread->state == READY) {
@@ -51,8 +51,8 @@ void get_next(queue_t queue, void* node, void* arg) {
 }
 
 void uthread_yield(void) {
-	queue_func_t next_func = &get_next;
-	queue_iterate(queue, get_next);
+	//queue_func_t next_func = &get_next;
+	//queue_iterate(queue, get_next);
 }
 
 void uthread_exit(void) {
@@ -85,7 +85,7 @@ int uthread_run(bool preempt, uthread_func_t func, void *arg)
 	queue = queue_create();
 	if (uthread_create(func, arg) == -1)
 		return -1;
-	while (queue_length != 0) {;}
+	while (queue_length(queue) != 0) {;}
 	return 0;
 }
 

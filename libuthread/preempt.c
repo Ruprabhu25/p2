@@ -9,6 +9,8 @@
 #include "private.h"
 #include "uthread.h"
 
+#define _XOPEN_SOURCE 1
+
 /*
  * Frequency of preemption
  * 100Hz is 100 times per second
