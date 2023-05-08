@@ -15,6 +15,20 @@ do {									\
 	}									\
 } while(0)
 
+static void inc_data(queue_t q, void* data)
+{
+	(void) q;
+	int* a = (int*)data;
+
+	(*a)++;
+}
+
+static void dequeue_all(queue_t q, void* data)
+{
+	queue_dequeue(q, &data);
+}
+
+
 /* Create */
 void test_create(void)
 {
@@ -51,6 +65,8 @@ void test_queue_multiple(void)
 	TEST_ASSERT(ptr == &data1);
 	queue_dequeue(q, (void**)&ptr);
 	TEST_ASSERT(ptr == &data2);
+	TEST_ASSERT(queue_length(q) == 0);
+
 }
 
 /* Dequeue empty */
@@ -97,21 +113,35 @@ void test_queue_delete_multiple(void)
 	TEST_ASSERT(queue_length(q) == 2);
 }
 
-void test_queue_destroy_empty(void)
+void test_queue_destroy(void)
 {
     queue_t q;
-
     fprintf(stderr, "*** TEST queue_destroy_empty ***\n");
 
     q = queue_create();
     TEST_ASSERT(queue_destroy(q) == 0);
 }
 
-// do test_queue_delete_multiple but data2 and data3 are the same
-// do test_queue_destroy_empty but queue is full of items
-// try queue_iterate tests (like incrementing each data value)
-// try queue_iterate tests that delete multiple nodes
+void test_queue_iterator()
+{
+	queue_t q;
+	int arr[] = { 1, 2, 3, 4, 5};
+	unsigned int i;
 
+	fprintf(stderr, "*** TEST queue_iterator ***\n");
+
+	q = queue_create();
+	for (i = 0; i < sizeof(arr) / sizeof(arr[0]); i++)
+		queue_enqueue(q, &arr[i]);
+
+	queue_iterate(q, inc_data);
+
+	TEST_ASSERT(arr[0] == 2);			
+	TEST_ASSERT(arr[2] == 4);			
+	queue_iterate(q, dequeue_all);
+	TEST_ASSERT(queue_length(q) == 0);
+	TEST_ASSERT(queue_destroy(q) == 0);		
+}
 
 int main(void)
 {
@@ -121,7 +151,7 @@ int main(void)
 	test_queue_empty();
 	test_queue_delete_single();
 	test_queue_delete_multiple();
-	test_queue_destroy_empty();
-
+	test_queue_destroy();
+	test_queue_iterator();
 	return 0;
 }
