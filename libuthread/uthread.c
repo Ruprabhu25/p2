@@ -12,12 +12,13 @@
 
  #define RUNNING 0
  #define READY 1
- #define WAITING 2
+ #define BLOCKED 2
  #define DONE 3
 
 int cur_id = 1;
 queue_t queue;
 struct uthread_tcb* current_thread;
+struct uthread_tcb* idle_thread;
 
 
 struct uthread_tcb {
@@ -34,7 +35,7 @@ struct uthread_tcb *uthread_current(void)
 }
 
 // get next ready node
-void get_next(queue_t queue, void* node) {
+/*void get_next(queue_t queue, void* node) {
 	struct uthread_tcb* thread = node;
 	if (current_thread->id == thread->id) {
 		return; // ignore current thread
@@ -48,22 +49,35 @@ void get_next(queue_t queue, void* node) {
 		// need to add some sort of flag indicating we do not need to iterate further
 	}
 
-}
+}*/
 
 void uthread_yield(void) {
-	queue_func_t next_func = &get_next;
-	queue_iterate(queue, get_next);
-	//uthread_ctx_switch(current, next);
+	struct uthread_tcb* previous_thread = uthread_current();
+	struct uthread_tcb* next_thread = NULL;
+	previous_thread->state = READY;
+	queue_dequeue(queue, &next_thread);
+	current_thread = next_thread;
+	current_thread->state = RUNNING;
+	if (idle_thread == next_thread && queue_length(queue) > 1) {
+		next_thread->state = READY;
+		queue_dequeue(queue, next_thread);
+		next_thread->state = RUNNING;
+		current_thread = next_thread;
+		queue_enqueue(queue, next_thread);
+	}
+
+	queue_enqueue(queue, previous_thread);
+	uthread_ctx_switch(previous_thread->context, next_thread->context);
 }
 
 void uthread_exit(void) {
 	/* TODO Phase 2 */
-	struct uthread_tcb* done_thread = current_thread;
+	current_thread->state = DONE;
+	struct uthread_tcb* done_thread = uthread_current();
 	uthread_yield();
-	//queue_dequeue(queue, done_thread);
-	// also have to queue_dequeue
-	done_thread->state = DONE;
+	queue_delete(queue, done_thread);
 	uthread_ctx_destroy_stack(done_thread->stack_ptr);
+	free(done_thread);
 }
 
 int uthread_create(uthread_func_t func, void *arg) {
@@ -74,13 +88,13 @@ int uthread_create(uthread_func_t func, void *arg) {
 	thread->stack_ptr = uthread_ctx_alloc_stack();
 	thread->state = RUNNING;
 	thread->context = malloc(sizeof(uthread_ctx_t));
-	if (uthread_ctx_init(thread->context, thread->stack_ptr,func, arg) == -1)
-		return -1;
 	if (thread->stack_ptr == NULL || thread->context == NULL) {
 		return -1;
 	}
+	if (uthread_ctx_init(thread->context, thread->stack_ptr,func, arg) == -1)
+		return -1;
 	//printf("here\n");
-	func(arg);
+	//func(arg);
 	queue_enqueue(queue, thread);
 	return 0;
 	/* TODO Phase 2 */
@@ -88,24 +102,44 @@ int uthread_create(uthread_func_t func, void *arg) {
 
 int uthread_run(bool preempt, uthread_func_t func, void *arg)
 {
-	printf("run\n");
+	//printf("run\n");
 	queue = queue_create();
-	printf("created queue\n");
-	if (uthread_create(func, arg) == -1) {
-		printf("failed\n");
+	idle_thread = malloc(sizeof(struct uthread_tcb));
+	if (idle_thread == NULL) {
 		return -1;
 	}
-	printf("length: %d\n", queue_length(queue));
+	idle_thread->context = malloc(sizeof(uthread_ctx_t));
+	if (idle_thread->context == NULL) {
+		return -1;
+	}
+	current_thread = idle_thread;
+	current_thread->state = RUNNING;
+	//printf("created queue\n");
+	if (uthread_create(func, arg) == -1) {
+		//printf("failed\n");
+		return -1;
+	}
+
+	while (queue_length(queue) != 0) {
+		uthread_yield();
+	}
+
+	free(idle_thread->context);
+	uthread_ctx_destroy_stack(idle_thread->stack_ptr);
+	free(idle_thread);
+	//printf("length: %d\n", queue_length(queue));
 	return 0;
 }
 
 void uthread_block(void)
 {
-	/* TODO Phase 3 */
+	current_thread->state = BLOCKED;
+	uthread_yield();
 }
 
 void uthread_unblock(struct uthread_tcb *uthread)
 {
-	/* TODO Phase 3 */
+	uthread->state = READY;
+	queue_enqueue(queue, uthread);
 }
 
