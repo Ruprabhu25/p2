@@ -39,7 +39,7 @@ int sem_down(sem_t sem)
 	}
 	else if (sem->count == 0) {
 		struct uthread_tcb* requesting_thread = uthread_current();
-		queue_enqueue(sem->blocked_threads, requesting_thread);
+		queue_enqueue(sem->blocked_threads, (void**) &requesting_thread);
 		uthread_block();
 		return 0;
 	}
@@ -58,7 +58,7 @@ int sem_up(sem_t sem)
 	else {
 		if (queue_length(sem->blocked_threads) > 0) {
 			struct uthread_tcb* released_thread = NULL;
-			queue_dequeue(sem->blocked_threads, released_thread);
+			queue_dequeue(sem->blocked_threads, (void**) &released_thread);
 			uthread_unblock(released_thread);
 		}
 

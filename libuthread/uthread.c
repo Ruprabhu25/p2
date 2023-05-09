@@ -55,18 +55,18 @@ void uthread_yield(void) {
 	struct uthread_tcb* previous_thread = uthread_current();
 	struct uthread_tcb* next_thread = NULL;
 	previous_thread->state = READY;
-	queue_dequeue(queue, &next_thread);
+	queue_dequeue(queue, (void**) &next_thread);
 	current_thread = next_thread;
 	current_thread->state = RUNNING;
 	if (idle_thread == next_thread && queue_length(queue) > 1) {
 		next_thread->state = READY;
-		queue_dequeue(queue, next_thread);
+		queue_dequeue(queue, (void**) &next_thread);
 		next_thread->state = RUNNING;
-		current_thread = next_thread;
-		queue_enqueue(queue, next_thread);
+		current_thread = next_thread; 
+		queue_enqueue(queue, (void**) &next_thread);
 	}
 
-	queue_enqueue(queue, previous_thread);
+	queue_enqueue(queue, (void**) &previous_thread);
 	uthread_ctx_switch(previous_thread->context, next_thread->context);
 }
 
@@ -95,7 +95,7 @@ int uthread_create(uthread_func_t func, void *arg) {
 		return -1;
 	//printf("here\n");
 	//func(arg);
-	queue_enqueue(queue, thread);
+	queue_enqueue(queue, (void**) &thread);
 	return 0;
 	/* TODO Phase 2 */
 }
@@ -140,6 +140,6 @@ void uthread_block(void)
 void uthread_unblock(struct uthread_tcb *uthread)
 {
 	uthread->state = READY;
-	queue_enqueue(queue, uthread);
+	queue_enqueue(queue, (void**) &uthread);
 }
 
