@@ -31,10 +31,10 @@ queue_t queue_create(void)
 
 int queue_destroy(queue_t queue)
 {
-	/* TODO Phase 1 */
+	// check if queue is not null and empty
 	if (queue == NULL || queue->len != 0) {
 		return -1;
-	}
+	} // frees the memory allocated to the queue
 	else {
 		free(queue);
 		return 0;
