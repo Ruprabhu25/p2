@@ -83,8 +83,11 @@ the signal handler and configuring the timer using the setitimer function. When
 preemption is enabled, the timer is started, and the signal handler is activated 
 periodically to invoke the uthread_yield function, which causes the current thread 
 to relinquish the CPU and give other threads a chance to run. The preempt_stop() 
-function stops the timer and resets the signal handler to its previous state, which
-is why we keep a sa_old and old_timer variable. Also there is preempt_disable and
-preempt_enable, which use the sigprocmask() function, which can either block or
-unblock the SIGALARM or SIGVTALARM. We created a testing file called
-test_preempt.c which calls the uthread_run() function with preempt to true. 
+function stops the timer and resets the signal handler to its previous state. Also 
+there is preempt_disable and preempt_enable, which use the sigprocmask() function, 
+which can either block or unblock the SIGALARM or SIGVTALARM. We created a testing
+file called test_preempt.c which calls the uthread_run() function with preempt to true.
+This makes thread1 yield to thread2, but since thread2 is running infinite, the preempt 
+alarm handler goes off after a certain amount of time which causes it to yield back
+to thread1. Since thread2 never called yield and just goes back to thread1, we can 
+confirm that our preemption implementation works as it uses the timer instead.
