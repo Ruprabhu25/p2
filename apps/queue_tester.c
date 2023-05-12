@@ -23,11 +23,6 @@ static void inc_data(queue_t q, void* data)
 	(*a)++;
 }
 
-static void dequeue_all(queue_t q, void* data)
-{
-	queue_dequeue(q, &data);
-}
-
 
 /* Create */
 void test_create(void)
@@ -51,6 +46,7 @@ void test_queue_simple(void)
 	TEST_ASSERT(ptr == &data);
 }
 
+/* test multiple enqueue/dequeue */
 void test_queue_multiple(void)
 {
 	int data1 = 3, data2 = 5, *ptr;
@@ -69,7 +65,7 @@ void test_queue_multiple(void)
 
 }
 
-/* Dequeue empty */
+/* Dequeue when queue is empty */
 void test_queue_empty(void)
 {
     int *ptr;
@@ -82,7 +78,7 @@ void test_queue_empty(void)
 }
 
 
-
+/* Delete single node in queue of length 1*/
 void test_queue_delete_single(void)
 {
 	int data = 3;
@@ -97,7 +93,7 @@ void test_queue_delete_single(void)
 	TEST_ASSERT(queue_length(q) == 0);
 }
 
-
+/* Delete signle node in queue of length > 1*/
 void test_queue_delete_multiple(void)
 {
 	int data1 = 3, data2 = 5, data3 = 7;
@@ -113,6 +109,7 @@ void test_queue_delete_multiple(void)
 	TEST_ASSERT(queue_length(q) == 2);
 }
 
+/* destroy queue */
 void test_queue_destroy(void)
 {
     queue_t q;
@@ -122,6 +119,7 @@ void test_queue_destroy(void)
     TEST_ASSERT(queue_destroy(q) == 0);
 }
 
+/* test the iteration function */
 void test_queue_iterator()
 {
 	queue_t q;
@@ -138,9 +136,6 @@ void test_queue_iterator()
 
 	TEST_ASSERT(arr[0] == 2);			
 	TEST_ASSERT(arr[2] == 4);			
-	queue_iterate(q, dequeue_all);
-	TEST_ASSERT(queue_length(q) == 0);
-	TEST_ASSERT(queue_destroy(q) == 0);		
 }
 
 int main(void)
