@@ -42,9 +42,7 @@ int sem_down(sem_t sem)
 	else if (sem->count == 0) {
 		struct uthread_tcb* requesting_thread = uthread_current();
 		queue_enqueue(sem->blocked_threads, requesting_thread);
-	        //printf("%d blocking\n", sem->id);
 		uthread_block();
-	//	printf("%d blocking\n", sem->id);
 	}
 	else {
 		sem->count--;
@@ -54,7 +52,6 @@ int sem_down(sem_t sem)
 
 int sem_up(sem_t sem)
 {
-	//printf("sem up called\n");
 	if (sem == NULL) {
 		return -1;
 	}
@@ -63,7 +60,6 @@ int sem_up(sem_t sem)
 			struct uthread_tcb* released_thread = NULL;
 			queue_dequeue(sem->blocked_threads, (void**) &released_thread);
 			uthread_unblock(released_thread);
-		printf("%d unblocked\n", sem->id);
 		}
 		else {
 			sem->count++;
