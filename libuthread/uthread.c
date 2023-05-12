@@ -34,20 +34,43 @@ struct uthread_tcb *uthread_current(void)
 }
 
 void uthread_yield(void) {
-	struct uthread_tcb* previous_thread = malloc(sizeof(struct uthread_tcb));
-	previous_thread = uthread_current();
-	struct uthread_tcb* next_thread = NULL; //malloc(sizeof(struct uthread_tcb));
-	previous_thread->state = READY;
+	
+	struct uthread_tcb* previous_thread = uthread_current();
+	struct uthread_tcb* next_thread = NULL;
+	//previous_thread->state = READY;
 	preempt_disable();
 	queue_dequeue(queue, (void**) &next_thread);
+	        printf("previous %d and state %d, next %d and state %d\n", previous_thread->id, previous_thread->state, next_thread->id, next_thread->state);
+	//current_thread = next_thread;
+	//current_thread->state = RUNNING;
+	if (previous_thread->state != BLOCKED && previous_thread->state != DONE)  {//if blocked, the thread is stored in a semaphore blocked queue
+	                previous_thread->state = READY;	
+	}
+	//printf("%d is being requeued\n", previous_thread->id);
+	if (previous_thread->state != DONE)
+		queue_enqueue(queue, previous_thread);
+	//}
+	//else {
+	//	printf("%d is blocked\n", previous_thread->id);
+	//}
+	if (idle_thread == next_thread && queue_length(queue) > 1) {
+		if (previous_thread->state != BLOCKED)
+			current_thread->state = READY;
+		queue_enqueue(queue, next_thread);
+		queue_dequeue(queue, (void**) &next_thread);
+		//current_thread = next_thread;
+		//current_thread->state = RUNNING;
+	} // currently not working, 41 is still running after being blocked
+	while(next_thread->state == BLOCKED) { //iterate over all next threads until we find a unblocked thread
+		printf("%d is blocked, moving on\n", next_thread->id);
+//		current_thread->state = READY;
+		queue_enqueue(queue, next_thread);
+		queue_dequeue(queue, (void**) &next_thread);
+		//current_thread = next_thread;
+	}
 	current_thread = next_thread;
 	current_thread->state = RUNNING;
-	queue_enqueue(queue, previous_thread);
-	if (idle_thread == next_thread && queue_length(queue) > 1) {
-		queue_dequeue(queue, (void**) &next_thread);
-		current_thread = next_thread;
-		current_thread->state = RUNNING;
-	}
+	printf("previous %d and state %d, next %d and state %d\n", previous_thread->id, previous_thread->state, next_thread->id, next_thread->state);
 	uthread_ctx_switch(previous_thread->context, next_thread->context);
 	preempt_enable();
 }
@@ -84,7 +107,6 @@ int uthread_create(uthread_func_t func, void *arg) {
 
 int uthread_run(bool preempt, uthread_func_t func, void *arg)
 {
-	if (preempt) {}
 	preempt_enable();
 	queue = queue_create();
 	preempt_disable();
@@ -96,13 +118,17 @@ int uthread_run(bool preempt, uthread_func_t func, void *arg)
 	if (idle_thread->context == NULL) {
 		return -1;
 	}
+	//current_thread->id = 1;
+	tid++;
 	current_thread = idle_thread;
 	current_thread->state = RUNNING;
 	preempt_start(preempt);
 	if (uthread_create(func, arg) == -1) {
 		return -1;
 	}
-	while (queue_length(queue) != 0) {
+	//uthread_yield();
+	while (queue_length(queue) != 0) {	
+		//printf("waiting\n");
 		uthread_yield();
 	}
 	preempt_stop();
@@ -114,6 +140,7 @@ int uthread_run(bool preempt, uthread_func_t func, void *arg)
 
 void uthread_block(void)
 {
+	printf("%d blocked\n", current_thread->id);
 	current_thread->state = BLOCKED;
 	uthread_yield();
 }
@@ -121,8 +148,9 @@ void uthread_block(void)
 void uthread_unblock(struct uthread_tcb *uthread)
 {
 	uthread->state = READY;
-	preempt_disable();
-	queue_enqueue(queue, uthread);
-	preempt_enable();
+	//preempt_disable();
+	//printf("enqueuing %d\n", uthread->id);
+	//queue_enqueue(queue, uthread);
+	//preempt_enable();
 }
 

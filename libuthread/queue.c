@@ -137,7 +137,7 @@ int queue_iterate(queue_t queue, queue_func_t func)
 	}
 	struct Node* temp = queue->head;
 	while (temp != NULL) {
-		printf("iterate\n");
+		//printf("iterate\n");
 		(*func)(queue, temp->data);
 		temp = temp->next;
 	}

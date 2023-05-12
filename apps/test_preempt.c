@@ -16,21 +16,28 @@
 
 #include <uthread.h>
 
+int thread1_done = 0;
+int thread2_done = 0;
+int thread3_done = 0;
 void thread3(void *arg)
 {
 	(void)arg;
-
-	//uthread_yield();
-	printf("thread3\n");
+	printf("thread3 loops\n");
+	thread3_done = 1;
+	uthread_yield();
 }
 
 void thread2(void *arg)
 {
 	(void)arg;
 
-	uthread_create(thread3, NULL);
-	//uthread_yield();
-	printf("thread2\n");
+//	uthread_create(thread3, NULL);
+	printf("thread2 loops\n");
+	thread2_done = 1;
+	while (1) {
+		//printf("forever\n");
+	}
+        printf("this shouldn't be displayed\n");
 }
 
 void thread1(void *arg)
@@ -38,10 +45,12 @@ void thread1(void *arg)
 	(void)arg;
 
 	uthread_create(thread2, NULL);
-	//uthread_yield();
-	printf("thread1\n");
-	//uthread_yield();
+	printf("thread1 loops\n");
+	uthread_yield();
+	thread1_done = 1;
+	printf("this should display\n");
 }
+
 
 int main(void)
 {
