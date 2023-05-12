@@ -19,7 +19,7 @@ doing O(1) when enqueuing and dequeuing. Singly linked lists can easily grow or
 shrink in size at runtime, unlike arrays which have a fixed size. This can be 
 helpful when the number of elements in the queue is not known ahead of time.
 We use this queue class in the other phases of the project such as when we work 
-on the threading as we have to queue incoming threads. We also test our queue
+on the threading as we have to enqueue incoming threads. We also test our queue
 using unit testing. We created a program called queue_tester.c and test all the
 main features of the queue, such as adding multiple elements to the queue, 
 removing elements from an empty queue, deleting elements from the queue, 
@@ -35,8 +35,7 @@ defined what was needed in the struct for the uthread.
 
 ```
 struct uthread_tcb {
-	int id;
-	int state; /* 0 indicates ready to run, 1 indicates running, 2 indicate exit*/
+	int state; 
 	void* stack_ptr;
 	uthread_ctx_t* context;
 };
@@ -44,7 +43,7 @@ struct uthread_tcb {
 
 We chose these to be in the structure since it holds all the necessary information
 for a thread's context and for managing its lifecycle, such as creating new threads,
-switching to another thread, and deleting a thread.
+switching to another thread, blocking a thread, and deleting a thread.
 
 We first work on creating uthread_run() as that is where the execution starts
 in the test cases. The uthread_run function initializes the thread library by 
@@ -54,7 +53,22 @@ loops until the queue is empty.
 
 
 ## Semaphore 
-
+The semaphore implementation was straightforward: the semaphore that was
+implemented only contains a queue of blocked threads that have requested 
+its "resource" and the internal
+count of how many "resources" it has. sem_create() and sem_destroy() only 
+instantiate and free the memory allocated to the semaphore, but sem_up() and 
+sem_down() required the uthread functions as well. By theory, a thread gets
+blocked when there are no more free resources in the semaphore, so when 
+sem_down() was called, we decided to check if the internal count was 0 and then
+add it to the blocked queue if so. This helped in the implementation of sem_up,
+first checking if there were any blocked threads and dequeuing the first or 
+oldest blocked thread if so. The uthread queue would also have to be affected,
+so we implemented a blocked state in our uthread queue. When calling the
+uthread_block() and uthread_unblock in sem_down() and sem_up(), we would change
+the state of the thread in the uthread queue to blocked and ready. If a thread
+was blocked, then when uthread_yield was called, it would then check if a thread
+was blocked and skip over as many blocked threads until it found a ready thread.
 
 
 
