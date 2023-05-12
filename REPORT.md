@@ -45,18 +45,32 @@ We chose these to be in the structure since it holds all the necessary informati
 for a thread's context and for managing its lifecycle, such as creating new threads,
 switching to another thread, blocking a thread, and deleting a thread.
 
-We first work on creating uthread_run() as that is where the execution starts
+We first worked on creating uthread_run() as that is where the execution starts
 in the test cases. The uthread_run function initializes the thread library by 
 creating a queue, creating the idle_thread, and setting it as the current_thread.
 It then creates a new thread with the given function and argument. The function then 
-loops until the queue is empty. 
-
+loops until the queue is empty. uthread_create simply initialized the thread and its contents which we used the private api for. uthread_yield contained most of the functionality of the uthread library. Initially, it would simply switch from the
+previous thread to the new thread by first initializing the previous and next
+thread pointers using uthread_current() and queue_dequeue() respectively, but
+later on we realized that we need to account first for the idle thread. If the
+idle thread was queued up, we would go to the next available thread in the
+queue. Later on, this function was amended to check if threads were in the done
+state or in the blocked state so they wouldn't become the current thread /
+context switched. They instead would be passed over until deleted or unblocked.  
+uthread_exit() was logically the next step in the implementation, since when a
+thread exits, it had to yield. The done state was set so that when the yield was
+executed, it would not be requeud for execution). uthread_block and
+uthread_unblock were implemented after the semaphore implementation was coming
+to a finish, as we had ascertain how the sem_down() and sem_up functions would
+call the uthread library functions. After that, we concluded that these
+functions would only have to change the state of the current thread or the
+thread passed in. Only in uthread_block() would the thread have to yield since
+it could no longer execute. 
 
 ## Semaphore 
 The semaphore implementation was straightforward: the semaphore that was
 implemented only contains a queue of blocked threads that have requested 
-its "resource" and the internal
-count of how many "resources" it has. sem_create() and sem_destroy() only 
+its "resource" and the internal count of how many "resources" it has. sem_create() and sem_destroy() only 
 instantiate and free the memory allocated to the semaphore, but sem_up() and 
 sem_down() required the uthread functions as well. By theory, a thread gets
 blocked when there are no more free resources in the semaphore, so when 
@@ -69,7 +83,6 @@ uthread_block() and uthread_unblock in sem_down() and sem_up(), we would change
 the state of the thread in the uthread queue to blocked and ready. If a thread
 was blocked, then when uthread_yield was called, it would then check if a thread
 was blocked and skip over as many blocked threads until it found a ready thread.
-
 
 
 ## Preemption
